@@ -5,7 +5,8 @@
 #include <time.h>
 //Structs
 char buffer[1];
-
+char *ruta;
+int iguales;
 struct Particion{
   char part_status,part_type,part_fit;
   int part_start,part_size;
@@ -29,7 +30,7 @@ struct EBR
    int part_start,part_size,part_next;
    char part_name [16];
 };
-struct EBR EBR_Contenedor;
+struct EBR EBR_Contenedor,EBR_Auxiliar,anterior;
 void CrearDisco(char *nombre,char *path,int tam,int multiplo)
 {
 
@@ -415,8 +416,11 @@ return n;
 }
 void crear_particion(char *path, char type,int unit,char fit,int part_tam, char *nombre)
 {
+ ruta=path;
+ iguales=1;
  struct   DiscoVirtual temp;
  struct   Particion part;
+ struct EBR temporal;
  part.part_fit=fit;
  part.part_size=part_tam*unit;
  part.part_status='1';
@@ -425,37 +429,55 @@ void crear_particion(char *path, char type,int unit,char fit,int part_tam, char 
  CargarDisco(path);
  int Extendida=HayExtendida();
  temp=contenedor;
+ Buscar_nombre(nombre,type);
   if((type=='E')&&(Extendida==1))
   {
       printf("No se pueden crear mas de 2 particiones Extendidas... \n");
-      exit(0);
+      return;
   }
-  if((type=='L'&&Extendida==1))
+  if((type=='L'&&Extendida!=1))
   {
        printf("No se pueden crear una particion lógica sin Extendidas... \n");
-      exit(0);
+      return;
   }
-  if(type=='E')
+
+    if(iguales==1)
   {
-      EBR_Contenedor.part_size=0;
-      EBR_Contenedor.part_start=0;
-      EBR_Contenedor.part_next=0;
-      strcpy (EBR_Contenedor.part_name,"chingon");
+       printf("Ya existe una particion con ese nombre... \n");
+      return;
   }
-  else if(type=='L')
+
+   if(type=='L')
   {
-      EBR_Contenedor.part_fit=fit;
-      EBR_Contenedor.part_name=name;
-      EBR_Contenedor.part_size=size;
-      EBR_Contenedor.part_status='1';
+      printf("Entre a logica... \n");
+      temporal.part_fit=fit;
+      temporal.part_size=part_tam*unit;
+      temporal.part_status='1';
+      strcpy (temporal.part_name,nombre);
+      EBR_Auxiliar=temporal;
+      BuscarEBR(path);
+      Buscar_nombre(nombre,type);
+      if(iguales==0)
+      {
+          insertarLogica(lista[0].part_size);
+      }
+      else{printf("Ya existe una particion con ese nombre... \n");}
+
+      return;
   }
-    if(temp.mbr_partition_1.part_size==0)
+  else
+  {
+      if(temp.mbr_partition_1.part_size==0)
     {
 
       part.part_start=Buscar_inicio(temp,part_tam);
        temp.mbr_partition_1=part;
        if(type=='E')
         {
+            EBR_Contenedor.part_size=0;
+            EBR_Contenedor.part_start=0;
+            EBR_Contenedor.part_next=0;
+            strcpy (EBR_Contenedor.part_name,"Prueba");
             EscribirEBRU(path,part.part_start);
         }
     }
@@ -463,9 +485,13 @@ void crear_particion(char *path, char type,int unit,char fit,int part_tam, char 
     {
           part.part_start=Buscar_inicio(temp,part_tam);
           temp.mbr_partition_2=part;
-           if(type=='E')
+          if(type=='E')
         {
-             EscribirEBRU(path,part.part_start);
+            EBR_Contenedor.part_size=0;
+            EBR_Contenedor.part_start=0;
+            EBR_Contenedor.part_next=0;
+            strcpy (EBR_Contenedor.part_name,"Prueba");
+            EscribirEBRU(path,part.part_start);
         }
     }
      else if(temp.mbr_partition_3.part_size==0)
@@ -474,7 +500,11 @@ void crear_particion(char *path, char type,int unit,char fit,int part_tam, char 
          temp.mbr_partition_3=part;
           if(type=='E')
         {
-             EscribirEBRU(path,part.part_start);
+            EBR_Contenedor.part_size=0;
+            EBR_Contenedor.part_start=0;
+            EBR_Contenedor.part_next=0;
+            strcpy (EBR_Contenedor.part_name,"Prueba");
+            EscribirEBRU(path,part.part_start);
         }
     }
      else if(temp.mbr_partition_4.part_size==0)
@@ -483,7 +513,11 @@ void crear_particion(char *path, char type,int unit,char fit,int part_tam, char 
        temp.mbr_partition_4=part;
         if(type=='E')
         {
-             EscribirEBRU(path,part.part_start);
+            EBR_Contenedor.part_size=0;
+            EBR_Contenedor.part_start=0;
+            EBR_Contenedor.part_next=0;
+            strcpy (EBR_Contenedor.part_name,"Prueba");
+            EscribirEBRU(path,part.part_start);
         }
     }
     else{
@@ -492,6 +526,9 @@ void crear_particion(char *path, char type,int unit,char fit,int part_tam, char 
     contenedor=temp;
      printf("Inicia en: %d\n", part.part_start);
      EscribirMBR(path);
+
+  }
+
 }
 int Buscar_inicio(struct DiscoVirtual temp,int size)
 {
@@ -606,7 +643,7 @@ void leerParticion()
     if(temp.mbr_partition_1.part_type=='E')
     {
           CargarEBR("/home/alfredo/discon.dsk",temp.mbr_partition_1.part_start);
-          printf("Nombre EBR: %s\n", EBR_Contenedor.part_name);
+          leerLogicas("/home/alfredo/discon.dsk");
     }
      printf("Nombre Particion 2: %s\n", temp.mbr_partition_2.part_name);
     printf("Particion 2 Inicia en: %d\n", temp.mbr_partition_2.part_start);
@@ -614,7 +651,7 @@ void leerParticion()
     if(temp.mbr_partition_2.part_type=='E')
     {
         CargarEBR("/home/alfredo/discon.dsk",temp.mbr_partition_2.part_start);
-          printf("Nombre EBR: %s\n", EBR_Contenedor.part_name);
+        leerLogicas("/home/alfredo/discon.dsk");
     }
      printf("Nombre Particion 3: %s\n", temp.mbr_partition_3.part_name);
     printf("Particion 3 Inicia en: %d\n", temp.mbr_partition_3.part_start);
@@ -622,7 +659,7 @@ void leerParticion()
     if(temp.mbr_partition_3.part_type=='E')
     {
         CargarEBR("/home/alfredo/discon.dsk",temp.mbr_partition_3.part_start);
-          printf("Nombre EBR: %s\n", EBR_Contenedor.part_name);
+           leerLogicas("/home/alfredo/discon.dsk");
     }
      printf("Nombre Particion 4: %s\n", temp.mbr_partition_4.part_name);
     printf("Particion 4 Inicia en: %d\n", temp.mbr_partition_4.part_start);
@@ -630,7 +667,7 @@ void leerParticion()
     if(temp.mbr_partition_4.part_type=='E')
     {
         CargarEBR("/home/alfredo/discon.dsk",temp.mbr_partition_4.part_start);
-          printf("Nombre EBR: %s\n", EBR_Contenedor.part_name);
+          leerLogicas("/home/alfredo/discon.dsk");
     }
 
 }
@@ -672,13 +709,12 @@ void exec(char *comando)
         Lexico(token,comando2);
         }
          fclose(archivo);
-
+       inicio();
 }
 void EliminarParticion(char *name, char *path, char *type)
 {
    CargarDisco(path);
    int len = strlen(name)-1;
-    printf("Largo de la cadena %d\n",len);
         if( strncasecmp(contenedor.mbr_partition_1.part_name, name, len)==0)
          {
              if(strncasecmp(type, "Fast", 3)==0)
@@ -687,8 +723,10 @@ void EliminarParticion(char *name, char *path, char *type)
              }
              else if(strncasecmp(type, "Full", 3)==0)
              {
+                 VaciarEspacio(contenedor.mbr_partition_1.part_start,contenedor.mbr_partition_1.part_start+contenedor.mbr_partition_1.part_size);
                  contenedor.mbr_partition_1.part_size=0;
                  contenedor.mbr_partition_1.part_start=0;
+                 contenedor.mbr_partition_1.part_type='N';
              }
              else{
                 printf("Tipo de Eliminación Desconocida\n");
@@ -702,8 +740,10 @@ void EliminarParticion(char *name, char *path, char *type)
              }
              else if(strncasecmp(type, "Full", 3)==0)
              {
+                 VaciarEspacio(contenedor.mbr_partition_2.part_start,contenedor.mbr_partition_2.part_start+contenedor.mbr_partition_2.part_size)
                  contenedor.mbr_partition_2.part_size=0;
                  contenedor.mbr_partition_2.part_start=0;
+                 contenedor.mbr_partition_2.part_type='N';
              }
              else{
                 printf("Tipo de Eliminación Desconocida\n");
@@ -717,8 +757,10 @@ void EliminarParticion(char *name, char *path, char *type)
              }
              else if(strncasecmp(type, "Full", 3)==0)
              {
+                 VaciarEspacio(contenedor.mbr_partition_3.part_start,contenedor.mbr_partition_3.part_start+contenedor.mbr_partition_3.part_size)
                  contenedor.mbr_partition_3.part_size=0;
                  contenedor.mbr_partition_3.part_start=0;
+                 contenedor.mbr_partition_3.part_type='N';
              }
              else{
                 printf("Tipo de Eliminación Desconocida\n");
@@ -732,8 +774,10 @@ void EliminarParticion(char *name, char *path, char *type)
              }
              else if(strncasecmp(type, "Full", 3)==0)
              {
+                 VaciarEspacio(contenedor.mbr_partition_4.part_start,contenedor.mbr_partition_4.part_start+contenedor.mbr_partition_4.part_size)
                  contenedor.mbr_partition_4.part_size=0;
                  contenedor.mbr_partition_4.part_start=0;
+                 contenedor.mbr_partition_4.part_type='N';
              }
              else{
                 printf("Tipo de Eliminación Desconocida\n");
@@ -773,8 +817,8 @@ int HayExtendida()
 }
 void EscribirEBRU(char *path, int inicio)
 {
-    printf("Escribiendo EBR... \n");
-    printf("Nombre EBR: %s\n", EBR_Contenedor.part_name);
+    printf("Escribiendo EBR en pos %d... \n",inicio);
+    printf("Escribiendo... EBR Nombre EBR: %s y tamaño %d \n", EBR_Contenedor.part_name,EBR_Contenedor.part_size);
     FILE *f = fopen (path, "rb+");
   fseek(f, inicio, SEEK_SET);
   fwrite(&EBR_Contenedor,sizeof(EBR_Contenedor),1,f);
@@ -782,7 +826,7 @@ void EscribirEBRU(char *path, int inicio)
 }
 void CargarEBR(char *path,int inicio)
 {
-
+      printf("Leyendo EBR en pos %d... \n",inicio);
         FILE *fp;
     if((fp=fopen(path, "rb")) == NULL) {
       printf("El disco no existe.\n");
@@ -791,8 +835,154 @@ void CargarEBR(char *path,int inicio)
     fseek(fp, inicio, SEEK_SET);
     fread(&EBR_Contenedor, sizeof(EBR_Contenedor), 1, fp);
     fclose(fp);
+     printf("Nombre  EBR leido %s... \n",EBR_Contenedor.part_name);
 }
-void insertarLogica()
+void insertarLogica(int tam)
 {
+     if(EBR_Contenedor.part_size==0)
+     {
+         if(lista[0].part_size+lista[0].part_start>EBR_Contenedor.part_start+EBR_Auxiliar.part_size)
+         {
+         EBR_Auxiliar.part_start=EBR_Contenedor.part_start;
+         EBR_Auxiliar.part_next=EBR_Auxiliar.part_size+EBR_Auxiliar.part_start+2;
+         EBR_Contenedor=EBR_Auxiliar;
+         EscribirEBRU(ruta,EBR_Auxiliar.part_start);
+         EBR_Contenedor.part_size=0;
+         EBR_Contenedor.part_start=EBR_Contenedor.part_next;
+         EBR_Contenedor.part_next=0;
+         EscribirEBRU(ruta,EBR_Auxiliar.part_next);
+         printf("Particion logica Creada: %s\n",EBR_Auxiliar.part_name);
+         }
+         else
+         {
+             printf("No hay espacio Necesario para crear la partición logica... \n");
+             return;
+         }
+     }
+     else if(EBR_Contenedor.part_start-anterior.part_start+anterior.part_size>EBR_Auxiliar.part_size)
+     {
 
+         EBR_Auxiliar.part_start=anterior.part_start+anterior.part_size;
+         EBR_Auxiliar.part_next=EBR_Contenedor.part_start;
+         anterior.part_next=anterior.part_start+anterior.part_size;
+         EBR_Contenedor=EBR_Auxiliar;
+         EscribirEBRU(ruta,EBR_Contenedor.part_start);
+         EBR_Contenedor=anterior;
+         EscribirEBRU(ruta,EBR_Contenedor.part_start);
+
+     }
+     else{
+        anterior=EBR_Contenedor;
+        CargarEBR(ruta,anterior.part_next);
+        insertarLogica(tam);
+     }
+}
+void BuscarEBR(char *path)
+{
+    if(contenedor.mbr_partition_1.part_type=='E')
+    {
+      CargarEBR(path,contenedor.mbr_partition_1.part_start);
+      EBR_Contenedor.part_start=contenedor.mbr_partition_1.part_start;
+      lista [0]=contenedor.mbr_partition_1;
+    }
+    else if(contenedor.mbr_partition_2.part_type=='E')
+    {
+      CargarEBR(path,contenedor.mbr_partition_2.part_start);
+      EBR_Contenedor.part_start=contenedor.mbr_partition_2.part_start;
+       lista [0]=contenedor.mbr_partition_2;
+    }
+    else if(contenedor.mbr_partition_3.part_type=='E')
+    {
+      CargarEBR(path,contenedor.mbr_partition_3.part_start);
+      EBR_Contenedor.part_start=contenedor.mbr_partition_3.part_start;
+       lista [0]=contenedor.mbr_partition_3;
+    }
+    else if(contenedor.mbr_partition_4.part_type=='E')
+    {
+      CargarEBR(path,contenedor.mbr_partition_4.part_start);
+      EBR_Contenedor.part_start=contenedor.mbr_partition_4.part_start;
+       lista [0]=contenedor.mbr_partition_4;
+    }
+    else {lista [0].part_size=0;}
+}
+void leerLogicas(char *path)
+{
+    while(EBR_Contenedor.part_size!=0)
+    {
+         printf("Nombre Particion Logica: %s\n", EBR_Contenedor.part_name);
+         CargarEBR(path,EBR_Contenedor.part_next);
+    }
+}
+void Buscar_nombre(char *name,char type)
+{
+    int length=strlen(name)-1;
+    if(type!='L')
+    {
+
+     if( strncasecmp(name, contenedor.mbr_partition_1.part_name, length)==0)
+     {
+        iguales=1;
+       return 1;
+     }
+     else if( strncasecmp(name, contenedor.mbr_partition_2.part_name, length)==0)
+     {
+         iguales=1;
+         return 1;
+     }
+      else if( strncasecmp(name, contenedor.mbr_partition_3.part_name, length)==0)
+     {
+         iguales=1;
+         return 1;
+     }
+      else if( strncasecmp(name, contenedor.mbr_partition_4.part_name, length)==0)
+     {
+         iguales=1;
+         return 1;
+     }
+     else{ iguales=0;
+            return 0;}
+    }
+    else
+        {
+
+           if( contenedor.mbr_partition_1.part_type=='E')
+            {
+              NombreIgualEBR(name,contenedor.mbr_partition_1.part_start,length);
+            }
+           else if( contenedor.mbr_partition_2.part_type=='E')
+            {
+                NombreIgualEBR(name,contenedor.mbr_partition_2.part_start,length);
+            }
+            else if( contenedor.mbr_partition_3.part_type=='E')
+            {
+                 NombreIgualEBR(name,contenedor.mbr_partition_3.part_start,length);
+            }
+            else if( contenedor.mbr_partition_4.part_type=='E')
+            {
+                NombreIgualEBR(name,contenedor.mbr_partition_4.part_start,length);
+            }
+
+        }
+
+}
+int NombreIgualEBR(char *names,int start,int len)
+{
+      printf("Buscando: %s de largo %d\n", names,len);
+    while(EBR_Contenedor.part_size!=0)
+    {
+         if( strncasecmp(names, EBR_Contenedor.part_name, len)==0)
+        {
+            iguales=1;
+         return 1;
+        }
+         CargarEBR(ruta,EBR_Contenedor.part_next);
+    }
+   iguales=0;
+}
+void VaciarEspacio(int in,int fin)
+{
+     FILE *f = fopen (ruta, "rb9");
+  for( i=in;i<fin;i++)
+    fwrite (buffer, sizeof(buffer), 1, f);
+  fclose(f);
 }
