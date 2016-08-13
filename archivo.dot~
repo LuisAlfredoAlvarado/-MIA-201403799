@@ -1,0 +1,4 @@
+digraph G{
+node [shape=record];
+struct1 [label="MBR  &#92;n tamaño: 31457280  &#92;n signature 19| {Particion: Extendida &#92;n Size: 512000 &#92;n Tipo: E &#92;n Start: 129 &#92;n Status: 1 &#92;n Fit: W |{ Particion: Prueba &#92;n Size: 204800 &#92;n Next: 204929 &#92;n Start: 129 &#92;n Status: 1 &#92;n Fit: W |Particion: Cuarta &#92;n Size: 102400 &#92;n Next: 409733 &#92;n Start: 204929 &#92;n Status: 1 &#92;n Fit: W |Particion: Tercera &#92;n Size: 51200 &#92;n Next: 460935 &#92;n Start: 409733 &#92;n Status: 1 &#92;n Fit: W }}|Particion: jas &#92;n Size: 512000 &#92;n Tipo: P &#92;n Start: 512130 &#92;n Status: 1 &#92;n Fit: W| Espacio Libre: 30433150(Bytes)"];
+}

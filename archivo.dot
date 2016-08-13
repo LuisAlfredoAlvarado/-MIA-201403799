@@ -1,0 +1,4 @@
+digraph G{
+node [shape=record];
+struct1 [label="MBR  &#92;n tamaño: 31457280  &#92;n signature 159| Particion: jas &#92;n Size: 512000 &#92;n Tipo: P &#92;n Start: 129 &#92;n Status: 1 &#92;n Fit: W| Espacio Libre: 30945151(Bytes)"];
+}
